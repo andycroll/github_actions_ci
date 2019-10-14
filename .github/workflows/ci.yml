@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+    - master
+  push:
+    branches:
+    - master
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:11.5
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ""
+          POSTGRES_DB: github_actions_ci_test
+        ports:
+        - 5432/tcp
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Set up Ruby 2.6
+      uses: actions/setup-ruby@v1
+      with:
+        ruby-version: 2.6.5
+
+    - name: Install PostgreSQL 11 client
+      run: |
+        sudo apt update
+        sudo bash -c "echo deb http://apt.postgresql.org/pub/repos/apt/ bionic-pgdg main >> /etc/apt/sources.list.d/pgdg.list"
+        wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+        sudo apt-get update
+        sudo apt-get install libpq-dev postgresql-client-11
+        psql -V
+
+    - name: Build App
+      env:
+        PGHOST: localhost
+        PGUSER: postgres
+        PGPORT: ${{ job.services.postgres.ports[5432] }} # get randomly assigned published port
+        RAILS_ENV: test
+      run: |
+        gem install bundler
+        bundle install --jobs 4 --retry 3
+        bin/rails db:setup
+
+    - name: Run Tests
+      env:
+        PGHOST: localhost
+        PGUSER: postgres
+        PGPORT: ${{ job.services.postgres.ports[5432] }} # get randomly assigned published port
+        RAILS_ENV: test
+      run: |
+        bundle exec rspec
