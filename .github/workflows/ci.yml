@@ -13,10 +13,20 @@ jobs:
         ports: ["5432:5432"]
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
-    container:
-      image: ruby:2.6.3
-
     steps:
+    - name: ruby-build pre-requisites
+      run: |
+        sudo apt-get -yqq install autoconf bison build-essential libssl-dev libyaml-dev libreadline6-dev zlib1g-dev libncurses5-dev libffi-dev libgdbm5 libgdbm-dev
+
+    - name: Install ruby-build
+      run: |
+        git clone https://github.com/rbenv/ruby-build.git
+        PREFIX=/usr/local ./ruby-build/install.sh
+
+    - name: Install specific ruby version
+      run: |
+        rbenv install 2.6.3
+
     - name: Install PostgreSQL 11 client
       run: |
         sudo apt-get -yqq install libpq-dev
