@@ -23,7 +23,7 @@ jobs:
 
     - name: Install specific ruby version
       run: |
-        ruby-install ruby 2.6.3
+        sudo ruby-install --system ruby 2.6.3
 
     - name: Install PostgreSQL 11 client
       run: |
