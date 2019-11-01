@@ -16,38 +16,27 @@ jobs:
     steps:
     - uses: actions/checkout@v1
 
-    - name: Install ruby-install
-      run: |
-        wget -O ruby-install-0.7.0.tar.gz https://github.com/postmodern/ruby-install/archive/v0.7.0.tar.gz
-        tar -xzvf ruby-install-0.7.0.tar.gz
-        cd ruby-install-0.7.0/
-        sudo make install
-
-    - name: Install specific ruby version
-      run: |
-        sudo ruby-install --system ruby 2.6.3
-
     - name: Install PostgreSQL 11 client
       run: |
         sudo apt-get -yqq install libpq-dev
 
-    - name: Dump Ruby context
+    - name: Set up RVM
       run: |
-        which ruby
-        which gem
-        ruby -v
+        curl -sSL https://get.rvm.io | bash
 
-    - name: Brutal writable permissions
+    - name: Set up Ruby from .ruby-version
       run: |
-        sudo chmod -R a+xrw /usr/local
+        source $HOME/.rvm/scripts/rvm
+        rvm install $(cat .ruby-version) --binary
+        rvm --default use $(cat .ruby-version)
 
     - name: Build App
       env:
         PGHOST: localhost
         PGUSER: postgres
         RAILS_ENV: test
-        PATH: "/usr/local/bin:$PATH"
       run: |
+        source $HOME/.rvm/scripts/rvm
         gem install bundler
         bundle install --jobs 4 --retry 3
         bin/rails db:setup
@@ -57,6 +46,6 @@ jobs:
         PGHOST: localhost
         PGUSER: postgres
         RAILS_ENV: test
-        PATH: "/usr/local/bin:$PATH"
       run: |
+        source $HOME/.rvm/scripts/rvm
         bundle exec rspec
