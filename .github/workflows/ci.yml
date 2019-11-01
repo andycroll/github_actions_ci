@@ -35,10 +35,9 @@ jobs:
         which gem
         ruby -v
 
-    - name: Change writable permissions
+    - name: Brutal writable permissions
       run: |
-        chmod go-w $HOME
-        sudo chmod -R go-w /usr/local
+        sudo chmod -R a+xrw /usr/local
 
     - name: Build App
       env:
