@@ -14,38 +14,42 @@ jobs:
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
-    - name: Install ruby-install
-      run: |
-        wget -O ruby-install-0.7.0.tar.gz https://github.com/postmodern/ruby-install/archive/v0.7.0.tar.gz
-        tar -xzvf ruby-install-0.7.0.tar.gz
-        cd ruby-install-0.7.0/
-        sudo make install
-
-    - name: Install specific ruby version
-      run: |
-        sudo ruby-install --system ruby 2.6.3
-
+    - uses: actions/checkout@v1
+    
     - name: Install PostgreSQL 11 client
       run: |
         sudo apt-get -yqq install libpq-dev
 
+    - name: Fixed world writable dirs
+      run: |
+        chmod go-w $HOME
+        sudo chmod -R go-w /usr/share
+        sudo chmod -R go-w /opt
+
+    - name: Set up RVM
+      run: |
+        curl -sSL https://get.rvm.io | bash
+
+    - name: Set up Ruby
+      run: |
+        source $HOME/.rvm/scripts/rvm
+        rvm install ruby-2.6.3 --binary
+        rvm --default use ruby-2.6.3
+
     - name: Dump Ruby context
       run: |
+        source $HOME/.rvm/scripts/rvm
         which ruby
         which gem
         ruby -v
-
-    - name: Brutal writable permissions
-      run: |
-        sudo chmod -R a+xrw /usr/local
 
     - name: Build App
       env:
         PGHOST: localhost
         PGUSER: postgres
         RAILS_ENV: test
-        PATH: "/usr/local/bin:$PATH"
       run: |
+        source $HOME/.rvm/scripts/rvm
         gem install bundler
         bundle install --jobs 4 --retry 3
         bin/rails db:setup
@@ -55,6 +59,6 @@ jobs:
         PGHOST: localhost
         PGUSER: postgres
         RAILS_ENV: test
-        PATH: "/usr/local/bin:$PATH"
       run: |
+        source $HOME/.rvm/scripts/rvm
         bundle exec rspec
