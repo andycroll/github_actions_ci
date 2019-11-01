@@ -15,7 +15,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
-    
+
     - name: Install PostgreSQL 11 client
       run: |
         sudo apt-get -yqq install libpq-dev
@@ -30,18 +30,11 @@ jobs:
       run: |
         curl -sSL https://get.rvm.io | bash
 
-    - name: Set up Ruby
+    - name: Set up Ruby from .ruby-version
       run: |
         source $HOME/.rvm/scripts/rvm
-        rvm install ruby-2.6.3 --binary
-        rvm --default use ruby-2.6.3
-
-    - name: Dump Ruby context
-      run: |
-        source $HOME/.rvm/scripts/rvm
-        which ruby
-        which gem
-        ruby -v
+        rvm install $(cat .ruby-version) --binary
+        rvm --default use $(cat .ruby-version)
 
     - name: Build App
       env:
